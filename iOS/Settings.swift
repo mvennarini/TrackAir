@@ -10,6 +10,8 @@ final class Settings: ObservableObject {
     @AppStorage("tapDrag") var tapDrag: Bool = false               // Dragging = 0
     @AppStorage("holdToDrag") var holdToDrag: Bool = true          // tieni fermo un dito = clic tenuto, poi trascina
     @AppStorage("showDebug") var showDebug: Bool = false
+    @AppStorage("transport") var transport: String = "auto"          // auto | wifi | bluetooth
+    @AppStorage("keepWifiAwake") var keepWifiAwake: Bool = true      // keep-alive fitto: niente buchi da risparmio energetico
     @AppStorage("threeFingerDrag") var threeFingerDrag: Bool = true // TrackpadThreeFingerDrag = 1
     @AppStorage("naturalScroll") var naturalScroll: Bool = true    // swipescrolldirection = 1
     @AppStorage("scrollSpeed") var scrollSpeed: Double = 1.0

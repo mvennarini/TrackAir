@@ -37,7 +37,7 @@ struct ContentView: View {
         case .searching: return String(localized: "Looking for your Mac…")
         case .connecting(let n): return String(localized: "Connecting to \(n)…")
         case .pairing(let n): return String(localized: "Pairing with \(n)…")
-        case .connected(let n): return String(localized: "Connected to \(n)")
+        case .connected(let n): return client.linkLabel.isEmpty ? String(localized: "Connected to \(n)") : String(localized: "Connected to \(n) via \(client.linkLabel)")
         }
     }
 
@@ -240,6 +240,7 @@ struct SettingsView: View {
                         Button { client.connect(to: m) } label: {
                             HStack {
                                 Text(m.name)
+                                Text(m.link.label).font(.caption).foregroundStyle(.secondary)
                                 Spacer()
                                 if client.currentName == m.name && client.isConnected {
                                     Image(systemName: "checkmark").foregroundStyle(Color.green)
@@ -251,6 +252,18 @@ struct SettingsView: View {
                         .tint(.primary)
                     }
                     Button(String(localized: "Search again")) { client.startBrowsing() }
+                }
+                Section(String(localized: "Connection")) {
+                    Picker(String(localized: "Link"), selection: $settings.transport) {
+                        Text(String(localized: "Automatic")).tag("auto")
+                        Text("Wi-Fi").tag("wifi")
+                        Text("Bluetooth").tag("bluetooth")
+                    }
+                    .onChange(of: settings.transport) { _, _ in client.retry() }
+                    Toggle(String(localized: "Keep Wi-Fi awake (smoother, uses a bit more battery)"), isOn: $settings.keepWifiAwake)
+                    if !client.bluetoothAvailable {
+                        Text(String(localized: "Bluetooth is off on this device.")).font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
                 if !client.peers.isEmpty {
                     Section(String(localized: "Paired Macs")) {

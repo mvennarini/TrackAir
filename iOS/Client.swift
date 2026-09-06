@@ -2,15 +2,28 @@ import Foundation
 import Network
 import UIKit
 import CryptoKit
+import CoreBluetooth
 
-struct MacInfo: Identifiable, Equatable {
-    var id: String { "\(endpoint)" }
-    var macID: UUID?
-    var name: String
-    var endpoint: NWEndpoint
+/// Come si raggiunge un Mac: via rete (Bonjour + UDP) o via Bluetooth LE.
+enum Link: Equatable {
+    case wifi(NWEndpoint)
+    case ble(CBPeripheral)
+    var label: String {
+        switch self { case .wifi: return "Wi-Fi"; case .ble: return "Bluetooth" }
+    }
 }
 
-/// Trova i Mac via Bonjour, gestisce abbinamento e sessione cifrata, manda i gesti.
+struct MacInfo: Identifiable, Equatable {
+    var id: String
+    var macID: UUID?
+    var name: String
+    var link: Link
+}
+
+/// Preferenza di collegamento (Impostazioni).
+enum TransportMode: String { case auto, wifi, bluetooth }
+
+/// Trova i Mac (Bonjour e Bluetooth), gestisce abbinamento e sessione cifrata, manda i gesti.
 final class Client: ObservableObject {
     enum State: Equatable {
         case searching
@@ -24,10 +37,14 @@ final class Client: ObservableObject {
     @Published var showPINEntry = false
     @Published var pairingError: String? = nil
     @Published var peers: [PeerRecord] = []
+    @Published var connectingSince = Date.distantPast
+    @Published var linkLabel: String = ""
+    @Published var bluetoothAvailable = false
 
     let store: PeerStore
     private var browser: NWBrowser?
     private var connection: NWConnection?
+    private let ble = BLEClient()
     private var keepalive: Timer?
     private var current: MacInfo?
     private var sealer: Sealer?
@@ -35,66 +52,119 @@ final class Client: ObservableObject {
     private var pendingPair: (pin: String, priv: Curve25519.KeyAgreement.PrivateKey)?
     private var lastAck = Date.distantPast
     private var connectedSince = Date.distantPast
-    @Published var connectingSince = Date.distantPast
-    /// Vero se stiamo aspettando il Mac da troppo: il collegamento c'e' ma non risponde.
-    var stalled: Bool {
-        if case .connecting = state { return Date().timeIntervalSince(connectingSince) > 5 }
-        return false
-    }
+    private var lastHello = Date.distantPast
+    private var wifiFailures = 0
     private let queue = DispatchQueue(label: "trackair.client")
     private let lastMacKey = "trackair.lastMac"
+
+    var mode: TransportMode { TransportMode(rawValue: UserDefaults.standard.string(forKey: "transport") ?? "auto") ?? .auto }
+    var keepWifiAwake: Bool { UserDefaults.standard.object(forKey: "keepWifiAwake") == nil ? true : UserDefaults.standard.bool(forKey: "keepWifiAwake") }
 
     init() {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("TrackAir", isDirectory: true)
         store = PeerStore(directory: dir)
         peers = store.peers
+        wireBLE()
     }
 
     var isConnected: Bool { if case .connected = state { return true }; return false }
     var currentName: String? { current?.name }
+    var stalled: Bool {
+        if case .connecting = state { return Date().timeIntervalSince(connectingSince) > 5 }
+        return false
+    }
 
     // MARK: ricerca
 
     func startBrowsing() {
-        browser?.cancel()
-        let params = NWParameters.udp
-        params.includePeerToPeer = true
-        let b = NWBrowser(for: .bonjourWithTXTRecord(type: Msg.serviceType, domain: nil), using: params)
-        b.browseResultsChangedHandler = { [weak self] results, _ in
-            DispatchQueue.main.async { self?.updateFound(results) }
+        browser?.cancel(); browser = nil
+        found.removeAll { if case .wifi = $0.link { return true }; return false }
+        if mode != .bluetooth {
+            let params = NWParameters.udp
+            params.includePeerToPeer = true
+            let b = NWBrowser(for: .bonjourWithTXTRecord(type: Msg.serviceType, domain: nil), using: params)
+            b.browseResultsChangedHandler = { [weak self] results, _ in
+                DispatchQueue.main.async { self?.updateWifi(results) }
+            }
+            b.start(queue: queue)
+            browser = b
         }
-        b.start(queue: queue)
-        browser = b
+        if mode != .wifi { ble.startScan() } else { ble.stopScan() }
+        pickIfIdle()
     }
 
     func stop() {
         keepalive?.invalidate(); keepalive = nil
         connection?.cancel(); connection = nil
         browser?.cancel(); browser = nil
+        ble.stopScan(); ble.disconnect()
         sealer = nil; opener = nil; current = nil
-        state = .searching
+        state = .searching; linkLabel = ""
     }
 
-    private func updateFound(_ results: Set<NWBrowser.Result>) {
-        found = results.map { r in
+    private func updateWifi(_ results: Set<NWBrowser.Result>) {
+        found.removeAll { if case .wifi = $0.link { return true }; return false }
+        for r in results {
             var id: UUID? = nil
             if case .bonjour(let txt) = r.metadata, let s = txt["id"] { id = UUID(uuidString: s) }
-            return MacInfo(macID: id, name: Self.name(of: r), endpoint: r.endpoint)
-        }.sorted { $0.name < $1.name }
-
-        if let cur = current, !found.contains(where: { $0.endpoint == cur.endpoint }) {
+            found.append(MacInfo(id: "wifi:\(r.endpoint)", macID: id, name: Self.name(of: r), link: .wifi(r.endpoint)))
+        }
+        found.sort { $0.name < $1.name }
+        if let cur = current, case .wifi = cur.link, !found.contains(where: { $0.id == cur.id }) {
             disconnect(keepState: false)
         }
-        if connection == nil, let pick = chooseMac() { connect(to: pick) }
+        pickIfIdle()
     }
 
-    /// Preferisce l'ultimo Mac usato, poi un Mac gia' abbinato, poi il primo trovato.
+    private func wireBLE() {
+        ble.onAvailability = { [weak self] ok in self?.bluetoothAvailable = ok }
+        ble.onFound = { [weak self] p, name in
+            guard let self else { return }
+            let info = MacInfo(id: "ble:\(p.identifier.uuidString)", macID: nil, name: name, link: .ble(p))
+            if !self.found.contains(where: { $0.id == info.id }) { self.found.append(info); self.found.sort { $0.name < $1.name } }
+            self.pickIfIdle()
+        }
+        ble.onLost = { [weak self] p in self?.found.removeAll { $0.id == "ble:\(p.identifier.uuidString)" } }
+        ble.onReady = { [weak self] p, macID, name in
+            guard let self, let cur = self.current, case .ble(let cp) = cur.link, cp === p else { return }
+            self.current?.macID = macID
+            self.current?.name = name
+            if let i = self.found.firstIndex(where: { $0.id == cur.id }) { self.found[i].macID = macID; self.found[i].name = name }
+            self.onReady()
+        }
+        ble.onReceive = { [weak self] d in self?.handle(d) }
+        ble.onDisconnect = { [weak self] p in
+            guard let self, let cur = self.current, case .ble(let cp) = cur.link, cp === p else { return }
+            self.disconnect(keepState: false)
+            self.pickIfIdle()
+        }
+    }
+
+    private func pickIfIdle() {
+        guard connection == nil, ble.peripheral == nil, let pick = chooseMac() else { return }
+        connect(to: pick)
+    }
+
+    /// Preferenza: ultimo Mac usato, poi un Mac abbinato, poi il primo trovato.
+    /// In automatico il Wi-Fi vince sul Bluetooth, a meno che abbia appena fallito.
     private func chooseMac() -> MacInfo? {
+        var candidates = found
+        switch mode {
+        case .wifi: candidates = candidates.filter { if case .wifi = $0.link { return true }; return false }
+        case .bluetooth: candidates = candidates.filter { if case .ble = $0.link { return true }; return false }
+        case .auto:
+            let preferBLE = wifiFailures >= 1
+            candidates.sort { a, b in
+                let aw: Bool = { if case .wifi = a.link { return true }; return false }()
+                let bw: Bool = { if case .wifi = b.link { return true }; return false }()
+                return preferBLE ? (!aw && bw) : (aw && !bw)
+            }
+        }
         if let last = UserDefaults.standard.string(forKey: lastMacKey),
-           let m = found.first(where: { $0.macID?.uuidString == last }) { return m }
-        if let m = found.first(where: { mac in mac.macID.map { store.peer($0) != nil } ?? false }) { return m }
-        return found.first
+           let m = candidates.first(where: { $0.macID?.uuidString == last }) { return m }
+        if let m = candidates.first(where: { mac in mac.macID.map { store.peer($0) != nil } ?? false }) { return m }
+        return candidates.first
     }
 
     static func name(of r: NWBrowser.Result) -> String {
@@ -108,33 +178,40 @@ final class Client: ObservableObject {
         disconnect(keepState: true)
         current = mac
         state = .connecting(mac.name)
-        let params = NWParameters.udp
-        params.prohibitedInterfaceTypes = [.cellular]
-        params.serviceClass = .interactiveVoice   // priorita' Wi-Fi: meno buchi e meno jitter
-        let c = NWConnection(to: mac.endpoint, using: params)
+        linkLabel = mac.link.label
         connectingSince = Date()
-        c.stateUpdateHandler = { [weak self] st in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                switch st {
-                case .ready: self.onReady()
-                case .failed, .cancelled: if self.connection === c { self.disconnect(keepState: false) }
-                default: break
+        switch mac.link {
+        case .wifi(let endpoint):
+            let params = NWParameters.udp
+            params.prohibitedInterfaceTypes = [.cellular]
+            params.serviceClass = .interactiveVoice
+            let c = NWConnection(to: endpoint, using: params)
+            c.stateUpdateHandler = { [weak self] st in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    switch st {
+                    case .ready: self.onReady()
+                    case .failed, .cancelled: if self.connection === c { self.disconnect(keepState: false) }
+                    default: break
+                    }
                 }
             }
+            c.start(queue: queue)
+            connection = c
+            receive(c)
+        case .ble(let p):
+            ble.connect(p)   // onReady arriva dopo la lettura dell'identita'
         }
-        c.start(queue: queue)
-        connection = c
-        receive(c)
-        keepalive = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.tick() }
+        keepalive = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in self?.tick() }
     }
 
     private func disconnect(keepState: Bool) {
         keepalive?.invalidate(); keepalive = nil
         connection?.cancel(); connection = nil
+        ble.disconnect()
         sealer = nil; opener = nil; pendingPair = nil
         current = nil
-        if !keepState { state = .searching; showPINEntry = false }
+        if !keepState { state = .searching; showPINEntry = false; linkLabel = "" }
     }
 
     private func onReady() {
@@ -148,19 +225,38 @@ final class Client: ObservableObject {
         }
     }
 
+    /// 20 volte al secondo: keep-alive fitto che tiene sveglia la radio Wi-Fi
+    /// (se attivo), riconnessione se il Mac tace, ricalcolo di "stalled".
     private func tick() {
-        guard connection != nil else { return }
-        objectWillChange.send()   // aggiorna "stalled" nella UI
-        if case .connected = state, Date().timeIntervalSince(lastAck) > 6 {
-            // il Mac non risponde piu': riprova da capo
-            state = current.map { .connecting($0.name) } ?? .searching
-            if let mac = current { connect(to: mac) }
+        guard current != nil else { return }
+        objectWillChange.send()
+        let now = Date()
+        if case .connected = state, now.timeIntervalSince(lastAck) > 6 {
+            if case .wifi = current!.link { wifiFailures += 1 }
+            let mac = current!
+            disconnect(keepState: true)
+            if mode == .auto, wifiFailures >= 1, let b = found.first(where: { if case .ble = $0.link { return $0.macID == mac.macID || mac.macID == nil }; return false }) {
+                connect(to: b)
+            } else {
+                connect(to: mac)
+            }
             return
         }
-        if sealer != nil { sendHello() }
+        if case .connecting = state, stalled, mode == .auto, case .wifi = current!.link,
+           let b = found.first(where: { if case .ble = $0.link { return true }; return false }) {
+            // il Mac non risponde via rete: provo il Bluetooth
+            wifiFailures += 1
+            connect(to: b)
+            return
+        }
+        guard sealer != nil else { return }
+        let interval: TimeInterval
+        if case .wifi = current!.link, keepWifiAwake, isConnected { interval = 0.05 } else { interval = 2 }
+        if now.timeIntervalSince(lastHello) >= interval { sendHello() }
     }
 
     private func sendHello() {
+        lastHello = Date()
         sendSealed(Msg(type: .hello, name: UIDevice.current.name))
     }
 
@@ -183,6 +279,7 @@ final class Client: ObservableObject {
                 if let mac = current {
                     state = .connected(msg.name ?? mac.name)
                     connectedSince = Date()
+                    if case .wifi = mac.link { wifiFailures = 0 }
                     if let id = mac.macID { UserDefaults.standard.set(id.uuidString, forKey: lastMacKey); store.touch(id) }
                     peers = store.peers
                 }
@@ -199,7 +296,7 @@ final class Client: ObservableObject {
             switch reason {
             case "wrong-pin": pairingError = String(localized: "Wrong PIN. Check the number on your Mac and try again.")
             case "locked":    pairingError = String(localized: "Too many attempts. Wait 30 seconds and try again.")
-            default:          pairingError = nil   // "show-pin": il Mac ha appena mostrato il PIN
+            default:          pairingError = nil
             }
             pendingPair = nil
             showPINEntry = true
@@ -217,34 +314,27 @@ final class Client: ObservableObject {
         knock()
     }
 
-    /// Ricomincia da capo la ricerca e il collegamento.
     func retry() {
+        wifiFailures = 0
         disconnect(keepState: false)
         startBrowsing()
     }
 
-    /// Forza un nuovo abbinamento con il Mac corrente (le chiavi vecchie vengono scartate).
     func repair() {
         if let id = current?.macID { store.remove(id); peers = store.peers }
         sealer = nil; opener = nil
-        if connection != nil { beginPairing() } else { retry() }
+        if current != nil { beginPairing() } else { retry() }
     }
 
-    /// Chiede al Mac di mostrare il PIN.
     func knock() {
         var body = LocalIdentity.id.data
         body.append(Data(UIDevice.current.name.utf8))
         sendRaw(Wire.frame(.pairKnock, body))
     }
 
-    /// Codice letto con la fotocamera: contiene l'ID del Mac e il segreto.
-    /// Se il Mac inquadrato non e' quello a cui siamo collegati, ci si collega a quello.
     func submitCode(_ text: String) -> Bool {
         guard let code = Pairing.parseCode(text) else { return false }
-        if current != nil && current?.macID == nil {
-            // il Mac collegato non ha ancora un ID noto: lo prendo dal codice, che e' autenticato dal segreto
-            current?.macID = code.macID
-        }
+        if current != nil && current?.macID == nil { current?.macID = code.macID }
         if current?.macID != code.macID {
             guard let mac = found.first(where: { $0.macID == code.macID }) else {
                 pairingError = String(localized: "That Mac is not on this network.")
@@ -259,7 +349,7 @@ final class Client: ObservableObject {
     }
 
     func submitPIN(_ pin: String) {
-        guard pin.count >= Pairing.pinLength, connection != nil else { return }
+        guard pin.count >= Pairing.pinLength, current != nil else { return }
         pairingError = nil
         let priv = Curve25519.KeyAgreement.PrivateKey()
         pendingPair = (pin, priv)
@@ -275,11 +365,10 @@ final class Client: ObservableObject {
             return
         }
         let keys = Pairing.deriveKeys(shared: shared, deviceID: LocalIdentity.id, macID: resp.macID)
-        let record = PeerRecord(id: resp.macID, name: resp.name,
+        store.upsert(PeerRecord(id: resp.macID, name: resp.name,
                                 sendKey: keys.deviceToMac.withUnsafeBytes { Data($0) },
                                 receiveKey: keys.macToDevice.withUnsafeBytes { Data($0) },
-                                pairedAt: Date(), lastSeen: Date())
-        store.upsert(record)
+                                pairedAt: Date(), lastSeen: Date()))
         peers = store.peers
         current?.macID = resp.macID
         pendingPair = nil
@@ -292,13 +381,17 @@ final class Client: ObservableObject {
     func forget(_ id: UUID) {
         store.remove(id)
         peers = store.peers
-        if current?.macID == id { disconnect(keepState: false); if let m = chooseMac() { connect(to: m) } }
+        if current?.macID == id { disconnect(keepState: false); pickIfIdle() }
     }
 
     // MARK: invio
 
     private func sendRaw(_ d: Data) {
-        connection?.send(content: d, completion: .contentProcessed { _ in })
+        guard let cur = current else { return }
+        switch cur.link {
+        case .wifi: connection?.send(content: d, completion: .contentProcessed { _ in })
+        case .ble: ble.send(d)
+        }
     }
 
     private func sendSealed(_ m: Msg) {

@@ -31,6 +31,7 @@ targets:
         CFBundleLocalizations: [en, it]
         LSApplicationCategoryType: public.app-category.utilities
         NSLocalNetworkUsageDescription: TrackAir looks for your Mac on the local network to use this device as a trackpad. Nothing leaves your network.
+        NSBluetoothAlwaysUsageDescription: TrackAir can connect to your Mac over Bluetooth when Wi-Fi is unavailable or unreliable.
         NSBonjourServices: [_trackair._udp]
         NSCameraUsageDescription: TrackAir uses the camera only to read the pairing code shown on your Mac.
         UILaunchScreen: {}
@@ -68,6 +69,7 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
         NSLocalNetworkUsageDescription: TrackAir receives trackpad input from your iPhone or iPad over the local network.
+        NSBluetoothAlwaysUsageDescription: TrackAir offers a Bluetooth connection to your iPhone or iPad as an alternative to Wi-Fi.
         NSBonjourServices: [_trackair._udp]
         NSHumanReadableCopyright: Copyright 2026 Michele Vennarini. MIT License.
     settings:

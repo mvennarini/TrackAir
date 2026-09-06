@@ -23,6 +23,7 @@ final class Server: ObservableObject {
     let store: PeerStore
     let pairing = PairingController()
     private(set) var web: WebServer?
+    private(set) var ble: BLEServer?
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "trackair.server")
     private let mouse = MouseController()
@@ -44,6 +45,7 @@ final class Server: ObservableObject {
         peers = store.peers
         start()
         web = WebServer(server: self)
+        ble = BLEServer(server: self)
     }
 
     // MARK: rete

@@ -830,6 +830,66 @@
           }
         }
       }
+    },
+    "Connected to %@ via %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collegato a %@ via %@"
+          }
+        }
+      }
+    },
+    "Connection": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collegamento"
+          }
+        }
+      }
+    },
+    "Link": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canale"
+          }
+        }
+      }
+    },
+    "Automatic": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatico"
+          }
+        }
+      }
+    },
+    "Keep Wi-Fi awake (smoother, uses a bit more battery)": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni sveglio il Wi-Fi (più fluido, un po' più batteria)"
+          }
+        }
+      }
+    },
+    "Bluetooth is off on this device.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il Bluetooth è spento su questo dispositivo."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
