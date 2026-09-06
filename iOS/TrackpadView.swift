@@ -37,12 +37,11 @@ struct TrackpadView: UIViewRepresentable {
         v.fourPinch = settings.fourFingerPinch
         v.haptics = settings.haptics
         v.momentumEnabled = settings.momentum
-        v.onMove = { dx, dy in
+        v.onMove = { dx, dy, speed in
+            // accelerazione sulla velocita' reale (punti al secondo, filtrata),
+            // non sulla distanza del singolo evento che oscilla col ritmo dei pacchetti
             var g = sens
-            if accel {
-                let speed = hypot(dx, dy)
-                g *= 0.5 + min(speed / 8, 2.0)
-            }
+            if accel { g *= 0.5 + min(speed / 480, 2.0) }
             client.move(dx: dx * g, dy: dy * g)
         }
         let s = 1.5 * scrollSpeed * (natural ? 1 : -1)
@@ -57,7 +56,7 @@ struct TrackpadView: UIViewRepresentable {
 }
 
 final class TouchPadUIView: UIView {
-    var onMove: ((CGFloat, CGFloat) -> Void)?
+    var onMove: ((CGFloat, CGFloat, CGFloat) -> Void)?   // dx, dy, velocita' (pt/s)
     var onScroll: ((CGFloat, CGFloat) -> Void)?
     var onScrollEnd: (() -> Void)?
     var onMomentum: ((CGFloat, CGFloat) -> Void)?
@@ -96,6 +95,8 @@ final class TouchPadUIView: UIView {
     private var spreadStart: CGFloat = 0
     private var countChangedAt: TimeInterval = 0
     private var holdTimer: Timer?
+    private var speedEMA: CGFloat = 0
+    private var lastMoveTime: TimeInterval = 0
     private var cancelledCount = 0
 
     private let debugLabel: UILabel = {
@@ -156,6 +157,8 @@ final class TouchPadUIView: UIView {
         if fresh {
             gestureStart = t
             travelled = 0
+            speedEMA = 0
+            lastMoveTime = 0
             scrolling = false
             pinching = false
             swipeFired = false
@@ -196,7 +199,7 @@ final class TouchPadUIView: UIView {
 
         // mentre si trascina (clic tenuto o 3 dita) qualunque dito muove il puntatore
         if dragging {
-            onMove?(avg.x, avg.y)
+            emitMove(moved[0], event: event, fallback: avg)
             return
         }
         // le dita non atterrano tutte insieme: aspetto che il numero sia stabile
@@ -204,7 +207,7 @@ final class TouchPadUIView: UIView {
 
         switch active.count {
         case 1:
-            onMove?(avg.x, avg.y)
+            emitMove(moved[0], event: event, fallback: avg)
 
         case 2:
             // pizzico: cambia la distanza tra le dita
@@ -237,7 +240,7 @@ final class TouchPadUIView: UIView {
                 onButton?(0, true)
                 if haptics { clickHaptic.impactOccurred(intensity: 0.6) }
                 debug("3 dita: trascino")
-                onMove?(avg.x, avg.y)
+                emitMove(moved[0], event: event, fallback: avg)
             }
 
         default:
@@ -372,6 +375,24 @@ final class TouchPadUIView: UIView {
         link?.invalidate(); link = nil
         velocity = .zero
         if notify { onMomentumEnd?() }
+    }
+
+    /// Manda lo spostamento del dito usando tutti i campioni intermedi del touch
+    /// (fino a 120 al secondo sui display ProMotion) e la velocita' filtrata.
+    private func emitMove(_ touch: UITouch, event: UIEvent?, fallback: CGPoint) {
+        var dx: CGFloat = 0, dy: CGFloat = 0
+        var samples = 0
+        if let co = event?.coalescedTouches(for: touch), co.count > 1 {
+            for t in co { let d = delta(t); dx += d.x; dy += d.y; samples += 1 }
+        } else {
+            dx = fallback.x; dy = fallback.y; samples = 1
+        }
+        let t = touch.timestamp
+        let dt = lastMoveTime > 0 ? max(t - lastMoveTime, 0.004) : 1.0 / 60.0
+        lastMoveTime = t
+        let inst = hypot(dx, dy) / CGFloat(dt)
+        speedEMA += (inst - speedEMA) * 0.35
+        onMove?(dx, dy, speedEMA)
     }
 
     // MARK: utilita'

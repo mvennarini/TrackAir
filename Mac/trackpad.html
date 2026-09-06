@@ -226,7 +226,9 @@ savePrefs();
 
 // ---- azioni di rete usate dai gesti ----
 const out = {
-  move(dx, dy) { let g = P.sens; if (P.accel) g *= 0.5 + Math.min(Math.hypot(dx, dy) / 8, 2); sendSealed(msg(T.move, dx * g, dy * g)); },
+  _speed: 0, _last: 0,
+  move(dx, dy, t) { const now = t || performance.now(); const dt = this._last ? Math.max((now - this._last) / 1000, 0.004) : 1 / 60; this._last = now;
+    this._speed += (Math.hypot(dx, dy) / dt - this._speed) * 0.35; let g = P.sens; if (P.accel) g *= 0.5 + Math.min(this._speed / 480, 2); sendSealed(msg(T.move, dx * g, dy * g)); },
   scroll(dx, dy) { const s = 1.5 * P.ss * (P.nat ? 1 : -1); sendSealed(msg(T.scroll, dx * s, dy * s)); },
   scrollEnd() { sendSealed(msg(T.scrollEnd)); },
   momentum(dx, dy) { const s = 1.5 * P.ss * (P.nat ? 1 : -1); sendSealed(msg(T.momentum, dx * s, dy * s)); },
@@ -264,6 +266,7 @@ function dbg(t) { if (P.dbg) $('dbg').textContent = t; }
   pad.addEventListener('touchstart', e => {
     e.preventDefault(); stopMomentum(true);
     const t = now(), fresh = active.length === 0;
+    if (fresh) { out._speed = 0; out._last = 0; }
     for (const tc of e.changedTouches) { if (!active.find(a => a.identifier === tc.identifier)) { active.push(tc); start.set(tc.identifier, pt(tc)); prev.set(tc.identifier, pt(tc)); } }
     maxFingers = Math.max(maxFingers, active.length); countChangedAt = t; clearTimeout(holdTimer);
     if (fresh) {
@@ -282,10 +285,10 @@ function dbg(t) { if (P.dbg) $('dbg').textContent = t; }
     let dx = 0, dy = 0; for (const tc of moved) { const p = prev.get(tc.identifier); dx += tc.clientX - p.x; dy += tc.clientY - p.y; prev.set(tc.identifier, pt(tc)); }
     dx /= moved.length; dy /= moved.length;
     if (travelled > 6) clearTimeout(holdTimer);
-    if (dragging) { out.move(dx, dy); return; }
+    if (dragging) { out.move(dx, dy, e.timeStamp); return; }
     if (now() - countChangedAt < 0.05) return;
     const n = active.length;
-    if (n === 1) out.move(dx, dy);
+    if (n === 1) out.move(dx, dy, e.timeStamp);
     else if (n === 2) {
       if (pinchStart > 0) { const d = dist(pt(active[0]), pt(active[1])), r = d / pinchStart;
         if (r > 1.2 || r < 0.83) { pinching = true; endScroll(); out.key(r > 1 ? VK.equal : VK.minus, MOD.cmd); pinchStart = d; return; } }
@@ -293,7 +296,7 @@ function dbg(t) { if (P.dbg) $('dbg').textContent = t; }
       scrolling = true; samples.push({ t: now(), dx, dy }); if (samples.length > 12) samples.shift(); out.scroll(dx, dy);
     } else if (n === 3) {
       if (!P.drag3) return;
-      if (travelled > 4) { if (!dragging) { dragging = true; out.button(0, true); dbg('3 dita: trascino'); } out.move(dx, dy); }
+      if (travelled > 4) { if (!dragging) { dragging = true; out.button(0, true); dbg('3 dita: trascino'); } out.move(dx, dy, e.timeStamp); }
     } else {
       if (swipeFired) return;
       if (spreadStart > 0) { const r = spread() / spreadStart;

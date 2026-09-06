@@ -31,11 +31,57 @@ final class MouseController {
                        y: min(max(p.y, home.minY), home.maxY - 1))
     }
 
+    // MARK: movimento fluido
+    //
+    // I pacchetti arrivano a raffiche (ritmo del touch + rete): applicarli uno a
+    // uno fa saltare il puntatore. Qui gli spostamenti si accumulano e un timer a
+    // 240 Hz ne applica una frazione a ogni tick (filtro esponenziale), tenendo
+    // una posizione in virgola mobile: cosi' i movimenti lenti non perdono le
+    // frazioni di pixel e le raffiche diventano una corsa continua.
+    private let moveQueue = DispatchQueue(label: "trackair.move", qos: .userInteractive)
+    private var pending = CGPoint.zero
+    private var virtual: CGPoint? = nil
+    private var timer: DispatchSourceTimer?
+    private var idleTicks = 0
+
     func move(dx: CGFloat, dy: CGFloat) {
-        let cur = location()
-        let p = clamp(CGPoint(x: cur.x + dx, y: cur.y + dy), from: cur)
+        moveQueue.async {
+            self.pending.x += dx
+            self.pending.y += dy
+            self.idleTicks = 0
+            if self.timer == nil { self.startTimer() }
+        }
+    }
+
+    private func startTimer() {
+        let t = DispatchSource.makeTimerSource(queue: moveQueue)
+        t.schedule(deadline: .now(), repeating: .microseconds(4167), leeway: .microseconds(500))
+        t.setEventHandler { [weak self] in self?.tick() }
+        t.resume()
+        timer = t
+    }
+
+    private func tick() {
+        let real = location()
+        // se il puntatore e' stato mosso da altro (mouse vero), riparto da li'
+        if let v = virtual, hypot(v.x - real.x, v.y - real.y) > 4 { virtual = nil }
+        var pos = virtual ?? real
+        let remaining = hypot(pending.x, pending.y)
+        if remaining < 0.05 {
+            pending = .zero
+            idleTicks += 1
+            if idleTicks > 120 { timer?.cancel(); timer = nil; virtual = nil }   // mezzo secondo fermo: spengo il timer
+            return
+        }
+        // frazione applicata per tick: piu' e' lungo il tratto in attesa, piu' si corre
+        let f: CGFloat = remaining > 40 ? 0.7 : 0.5
+        let step = CGPoint(x: pending.x * f, y: pending.y * f)
+        pending.x -= step.x; pending.y -= step.y
+        pos.x += step.x; pos.y += step.y
+        pos = clamp(pos, from: real)
+        virtual = pos
         let type: CGEventType = leftDown ? .leftMouseDragged : (rightDown ? .rightMouseDragged : .mouseMoved)
-        let ev = CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: p,
+        let ev = CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: pos,
                          mouseButton: rightDown ? .right : .left)
         ev?.post(tap: .cghidEventTap)
     }
