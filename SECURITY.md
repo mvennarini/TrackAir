@@ -31,6 +31,14 @@ in the same session, which defeats replay. The sender ID is bound to the
 ciphertext as associated data. Unknown or undecryptable packets are ignored;
 the Mac answers only with a "pairing needed" frame.
 
+## Transports
+
+The same frames travel over UDP (Wi-Fi), WebSocket (web client) and
+Bluetooth LE (custom GATT service; frames larger than one write are split
+and reassembled). None of the transports adds or removes security: pairing,
+encryption and replay protection are identical on all of them, and a device
+paired on one link is paired on the others.
+
 ## What is not covered
 
 - Someone who already controls your Mac session or your unlocked phone.

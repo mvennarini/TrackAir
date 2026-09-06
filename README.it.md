@@ -19,8 +19,13 @@ English: [README.md](README.md)
   Mac (oppure un PIN di 6 cifre). Da lì in poi ogni pacchetto è cifrato e
   autenticato (X25519, HKDF, ChaCha20-Poly1305, protezione dal replay). Vedi
   `SECURITY.md`.
+- **Due canali, stessa cifratura**: Wi-Fi (Bonjour + UDP) oppure **Bluetooth
+  LE**, scelti in automatico o a mano. Il Bluetooth funziona senza nessuna
+  rete, in treno o in sala riunioni; il Wi-Fi ha il ritardo più basso in casa.
+  Sul Wi-Fi la radio del telefono viene tenuta sveglia, così il puntatore non
+  si inceppa mai.
 - App Mac nella barra dei menu: dispositivi abbinati, avvio al login, aiuto
-  per il permesso Accessibilità.
+  per il permesso Accessibilità, stato del Bluetooth.
 - **Versione web**: l'app Mac serve il trackpad anche come pagina web, per
   qualsiasi telefono o tablet, senza App Store e senza scadenza.
 - Italiano e inglese.
@@ -76,6 +81,11 @@ English: [README.md](README.md)
    PIN scritto sotto al codice.
 6. Lo schermo diventa il trackpad. In alto: un pallino verde (collegato), il
    bottone della tastiera e l'ingranaggio delle impostazioni.
+7. Facoltativo: in Impostazioni → **Collegamento** scegli il canale.
+   *Automatico* usa il Wi-Fi e passa al Bluetooth se il Mac non risponde;
+   *Bluetooth* non ha bisogno di nessuna rete (accendi il Bluetooth dal Centro
+   di Controllo; iOS chiede il permesso la prima volta). Lo stesso abbinamento
+   vale su entrambi i canali.
 
 Per rinnovare dopo 7 giorni: collega il dispositivo (o rendilo raggiungibile
 via Wi-Fi con "Connetti tramite rete" attivo in Xcode → Dispositivi) e lancia
@@ -113,6 +123,20 @@ di nuovo `./build.sh ios`. Oppure lascia fare ad
 I valori iniziali replicano le impostazioni Trackpad del Mac su cui l'app è
 nata; ogni gesto è un interruttore nelle impostazioni.
 
+## Wi-Fi o Bluetooth?
+
+| | Wi-Fi | Bluetooth LE |
+|---|---|---|
+| ritardo | 5–20 ms | 15–30 ms, molto costante |
+| aggiornamenti | al ritmo del touch, fino a 120 al secondo | circa 60 al secondo (intervallo di connessione) |
+| serve un router | sì, stessa rete | no |
+| punti deboli | buchi da risparmio energetico, reti affollate, bridge delle VM | condivide i 2,4 GHz con il Wi-Fi |
+
+Entrambi trasportano gli stessi frame autenticati e cifrati. Sul Mac i
+movimenti in arrivo vengono applicati a 240 Hz da un piccolo filtro che
+conserva la precisione sotto al pixel e copre i buchi brevi: tutti e due i
+canali risultano continui.
+
 ## Dettagli di build
 
 `project.yml` è la fonte di verità; `TrackAir.xcodeproj` viene generato da
@@ -138,11 +162,14 @@ Toolchain per compilare.
 Shared/Protocol.swift        messaggi (payload UDP da 9 byte)
 Shared/Secure.swift          frame, abbinamento, cifratura, anti-replay, archivio dei dispositivi
 Shared/Localizable.xcstrings inglese + italiano
-Mac/                         app menu bar: Server (UDP), WebServer (HTTP + WebSocket),
-                             MouseController (CGEvent), PairingController, SphereMetalView
+Mac/                         app menu bar: Server (UDP), BLEServer (periferica Bluetooth),
+                             WebServer (HTTP + WebSocket), MouseController (CGEvent),
+                             PairingController, SphereMetalView
 Mac/trackpad.html            il client web
-iOS/                         ciclo di vita UIKit + SwiftUI: Client, TrackpadView (motore dei gesti),
-                             KeyboardBridge, ScannerView, ContentView
+Shared/BLE.swift             UUID del servizio Bluetooth e spezzettamento dei frame
+iOS/                         ciclo di vita UIKit + SwiftUI: Client (canali Wi-Fi e Bluetooth),
+                             BLEClient, TrackpadView (motore dei gesti), KeyboardBridge,
+                             ScannerView, ContentView
 Tests/                       XCTest per il livello sicuro
 Tools/makeicon.swift         l'icona, disegnata con CoreGraphics
 ```
