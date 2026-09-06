@@ -22,6 +22,15 @@ final class BLEClient: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     private var reaper: Timer?
 
     var isAvailable: Bool { cm.state == .poweredOn }
+    var stateText: String {
+        switch cm.state {
+        case .poweredOn: return cm.isScanning ? "on, scanning" : "on"
+        case .poweredOff: return "off"
+        case .unauthorized: return "not allowed for TrackAir (Settings → TrackAir → Bluetooth)"
+        case .unsupported: return "unsupported"
+        default: return "starting…"
+        }
+    }
     var isConnected: Bool { peripheral?.state == .connected && rx != nil }
 
     override init() {

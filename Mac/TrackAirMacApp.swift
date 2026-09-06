@@ -56,6 +56,9 @@ struct TrackAirMacApp: App {
             }
             Divider()
             Button(String(localized: "Pair a new device…")) { server.pairing.begin() }
+            if let ble = server.ble {
+                Text(String(localized: "Bluetooth: \(ble.status)"))
+            }
             if let web = server.web {
                 Button(String(localized: "Copy web address: \(web.url)")) {
                     NSPasteboard.general.clearContents()

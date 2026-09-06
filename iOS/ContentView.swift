@@ -265,9 +265,7 @@ struct SettingsView: View {
                         Text(String(localized: "Current link: \(client.linkLabel)")).font(.footnote).foregroundStyle(.secondary)
                     }
                     Toggle(String(localized: "Keep Wi-Fi awake (smoother, uses a bit more battery)"), isOn: $settings.keepWifiAwake)
-                    if !client.bluetoothAvailable {
-                        Text(String(localized: "Bluetooth is off on this device.")).font(.footnote).foregroundStyle(.secondary)
-                    }
+                    Text(String(localized: "Bluetooth: \(client.bluetoothState)")).font(.footnote).foregroundStyle(.secondary)
                 }
                 if !client.peers.isEmpty {
                     Section(String(localized: "Paired Macs")) {

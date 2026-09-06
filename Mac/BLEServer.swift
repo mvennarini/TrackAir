@@ -6,7 +6,8 @@ import os
 private let blog = Logger(subsystem: "trackair", category: "ble")
 
 /// Periferica Bluetooth LE: stesso protocollo del canale UDP, un flusso per centrale.
-final class BLEServer: NSObject, CBPeripheralManagerDelegate {
+final class BLEServer: NSObject, CBPeripheralManagerDelegate, ObservableObject {
+    @Published var status: String = "…"
     private weak var server: Server?
     private var pm: CBPeripheralManager!
     private let queue = DispatchQueue(label: "trackair.ble")
@@ -34,7 +35,13 @@ final class BLEServer: NSObject, CBPeripheralManagerDelegate {
     var isAdvertising: Bool { pm.isAdvertising }
 
     func peripheralManagerDidUpdateState(_ p: CBPeripheralManager) {
-        guard p.state == .poweredOn else { blog.notice("bluetooth: \(p.state.rawValue)"); return }
+        let states: [CBManagerState: String] = [.poweredOff: "off", .unauthorized: "unauthorized", .unsupported: "unsupported", .resetting: "resetting", .unknown: "unknown"]
+        guard p.state == .poweredOn else {
+            let name = states[p.state] ?? "?"
+            blog.notice("bluetooth: \(name, privacy: .public)")
+            DispatchQueue.main.async { self.status = name }
+            return
+        }
         let service = CBMutableService(type: CBUUID(string: BLE.service), primary: true)
         let rx = CBMutableCharacteristic(type: rxUUID, properties: [.writeWithoutResponse, .write], value: nil, permissions: [.writeable])
         tx = CBMutableCharacteristic(type: CBUUID(string: BLE.tx), properties: [.notify], value: nil, permissions: [.readable])
@@ -45,7 +52,21 @@ final class BLEServer: NSObject, CBPeripheralManagerDelegate {
         p.add(service)
         p.startAdvertising([CBAdvertisementDataLocalNameKey: Host.current().localizedName ?? "Mac",
                             CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BLE.service)]])
-        blog.notice("bluetooth: servizio pubblicato")
+        blog.notice("bluetooth: servizio aggiunto, avvio pubblicazione")
+    }
+
+    func peripheralManager(_ p: CBPeripheralManager, didAdd service: CBService, error: Error?) {
+        if let error { blog.error("bluetooth: servizio non aggiunto: \(error.localizedDescription, privacy: .public)"); DispatchQueue.main.async { self.status = "service error" } }
+    }
+
+    func peripheralManagerDidStartAdvertising(_ p: CBPeripheralManager, error: Error?) {
+        if let error {
+            blog.error("bluetooth: pubblicazione fallita: \(error.localizedDescription, privacy: .public)")
+            DispatchQueue.main.async { self.status = "error: \(error.localizedDescription)" }
+        } else {
+            blog.notice("bluetooth: in pubblicazione")
+            DispatchQueue.main.async { self.status = "advertising" }
+        }
     }
 
     func peripheralManager(_ p: CBPeripheralManager, central: CBCentral, didSubscribeTo c: CBCharacteristic) {

@@ -40,6 +40,7 @@ final class Client: ObservableObject {
     @Published var connectingSince = Date.distantPast
     @Published var linkLabel: String = ""
     @Published var bluetoothAvailable = false
+    var bluetoothState: String { ble.stateText }
 
     let store: PeerStore
     private var browser: NWBrowser?
