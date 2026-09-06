@@ -259,7 +259,11 @@ struct SettingsView: View {
                         Text("Wi-Fi").tag("wifi")
                         Text("Bluetooth").tag("bluetooth")
                     }
+                    .pickerStyle(.segmented)
                     .onChange(of: settings.transport) { _, _ in client.retry() }
+                    if !client.linkLabel.isEmpty {
+                        Text(String(localized: "Current link: \(client.linkLabel)")).font(.footnote).foregroundStyle(.secondary)
+                    }
                     Toggle(String(localized: "Keep Wi-Fi awake (smoother, uses a bit more battery)"), isOn: $settings.keepWifiAwake)
                     if !client.bluetoothAvailable {
                         Text(String(localized: "Bluetooth is off on this device.")).font(.footnote).foregroundStyle(.secondary)
