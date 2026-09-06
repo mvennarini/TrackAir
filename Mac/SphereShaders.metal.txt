@@ -1,0 +1,126 @@
+#include <metal_stdlib>
+using namespace metal;
+
+// Sfera di vetro renderizzata in tempo reale: normale sferica ricostruita dal
+// pixel, luce che orbita, speculare, Fresnel, onde di energia interne, anello
+// luminoso rotante sul bordo, alone morbido fuori dalla sfera e riflesso sotto.
+// Il colore in uscita e' premoltiplicato per l'alpha (finestra trasparente).
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+};
+
+struct Uniforms {
+    float  time;
+    float2 resolution;
+    float  success;   // 0 = normale, 1 = abbinato (la sfera si accende di verde-azzurro)
+};
+
+vertex VertexOut sphere_vertex(uint vid [[vertex_id]]) {
+    float2 pos[3] = { float2(-1, -1), float2(3, -1), float2(-1, 3) };
+    VertexOut o;
+    o.position = float4(pos[vid], 0, 1);
+    o.uv = pos[vid] * 0.5 + 0.5;
+    return o;
+}
+
+static float hash21(float2 p) {
+    p = fract(p * float2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+static float noise(float2 p) {
+    float2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash21(i), b = hash21(i + float2(1, 0)), c = hash21(i + float2(0, 1)), d = hash21(i + float2(1, 1));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+fragment float4 sphere_fragment(VertexOut in [[stage_in]], constant Uniforms &u [[buffer(0)]]) {
+    float t = u.time;
+    float2 p = in.uv * 2.0 - 1.0;
+    p.x *= u.resolution.x / u.resolution.y;
+    // la sfera sta un po' sopra il centro, per lasciare spazio al riflesso sotto
+    p.y = -p.y;                    // y verso il basso, come nel resto della UI
+    float2 c = float2(0.006 * sin(t * 0.23), -0.05 + 0.006 * cos(t * 0.31));   // deriva lentissima
+    p -= c;
+
+    const float R = 0.64;
+    float dist = length(p);
+    float3 blue = float3(0.18, 0.55, 1.0);
+    float3 cyan = float3(0.55, 0.85, 1.0);
+    float3 green = float3(0.35, 0.95, 0.75);
+    float3 accent = mix(blue, green, u.success);
+
+    float3 color = float3(0.0);
+    float alpha = 0.0;
+
+    // ---- fuori dalla sfera: fumo e riflesso sul piano ----
+    if (dist > R) {
+        // dissolvenza verso ZERO ai bordi della finestra: senza, un residuo di
+        // pochi percento disegnava un rettangolo appena visibile
+        float2 e = min(in.uv, 1.0 - in.uv);
+        float edgeFade = smoothstep(0.0, 0.16, min(e.x, e.y));
+        float halo = exp(-(dist - R) * 5.5) * 0.5;
+        float2 q = (p - float2(0.0, R * 1.08)) / float2(0.70, 0.13);
+        float refl = exp(-dot(q, q) * 1.6) * 0.4;
+        alpha = clamp((halo + refl) * edgeFade, 0.0, 1.0);
+        color = accent * alpha;
+        return float4(color, alpha);
+    }
+
+    // ---- dentro: geometria ----
+    float z = sqrt(max(0.0, R * R - dot(p, p)));
+    float3 n = normalize(float3(p.x, -p.y, z));
+    float3 view = float3(0, 0, 1);
+
+    // luce che orbita
+    float la = t * 0.45;
+    float3 lightPos = float3(cos(la) * 2.0, 0.9 + sin(la * 0.7) * 1.0, 2.2);
+    float3 ld = normalize(lightPos - float3(p.x, -p.y, z));
+    float diffuse = max(dot(n, ld), 0.0);
+    float spec = pow(max(dot(reflect(-ld, n), view), 0.0), 90.0);
+    float fresnel = pow(1.0 - max(dot(n, view), 0.0), 3.0);
+
+    // onde di energia che ruotano dentro il vetro
+    float ang = atan2(p.y, p.x);
+    // bande di energia che scorrono in spirale, spente al centro e vicino al bordo
+    float waves = smoothstep(0.55, 1.0, sin(ang * 3.0 + dist * 9.0 - t * 0.9))
+                * smoothstep(0.10, 0.40, dist) * (1.0 - smoothstep(0.52, R, dist));
+    float n1 = noise(p * 3.0 + t * 0.08);
+    float n2 = noise(p * 7.0 - t * 0.05);
+
+    // anello luminoso che gira sul bordo (due punti caldi opposti)
+    float rim = smoothstep(R - 0.05, R, dist);
+    float sweep = 0.5 + 0.5 * cos(ang - t * 0.6);
+    float sweep2 = 0.5 + 0.5 * cos(ang * 1.0 - t * 0.6 + 3.14159);
+    float ringGlow = rim * (pow(sweep, 6.0) + 0.6 * pow(sweep2, 10.0));
+
+    // riflesso speculare grande in alto a sinistra (finestra riflessa)
+    float2 hp = (p - float2(-0.28, -0.38)) / float2(0.30, 0.12);
+    float2 hpr = float2(hp.x * 0.83 + hp.y * 0.55, -hp.x * 0.55 + hp.y * 0.83);
+    float highlight = exp(-dot(hpr, hpr) * 0.9) * (0.9 + 0.1 * sin(t * 0.5));
+
+    float3 base = float3(0.012, 0.035, 0.09);
+    base += float3(0.0, 0.07, 0.20) * n1;
+    base += accent * 0.32 * waves;
+    base += accent * 0.35 * diffuse * 0.4;
+    base += mix(float3(0.15, 0.55, 1.0), cyan, u.success) * spec * 1.6;
+    base += accent * fresnel * 1.5;
+    base += smoothstep(0.50, R, dist) * accent * 0.55;
+    base += cyan * ringGlow * 1.2;
+    base += float3(1.0) * highlight * 0.42;
+
+    // bordo esterno sottile e brillante
+    float edgeLine = smoothstep(R - 0.012, R - 0.004, dist) * (1.0 - smoothstep(R - 0.004, R, dist));
+    base += cyan * edgeLine * 1.2;
+
+    alpha = 0.86 + n2 * 0.06 + fresnel * 0.1;
+    alpha = clamp(alpha, 0.0, 1.0);
+    // ammorbidisce il bordo di un paio di pixel
+    alpha *= smoothstep(R, R - 0.008, dist);
+
+    return float4(base * alpha, alpha);
+}

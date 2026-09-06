@@ -1,0 +1,836 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ is now paired.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ è ora abbinato."
+          }
+        }
+      }
+    },
+    "A 6-digit PIN is shown on your Mac's screen. Enter it here to pair securely.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sullo schermo del Mac compare un PIN di 6 cifre. Inseriscilo qui per abbinare in modo sicuro."
+          }
+        }
+      }
+    },
+    "Acceleration": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accelerazione"
+          }
+        }
+      }
+    },
+    "App Exposé (down)": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Exposé (in basso)"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
+          }
+        }
+      }
+    },
+    "Connected to %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collegato a %@"
+          }
+        }
+      }
+    },
+    "Connected: %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collegato: %@"
+          }
+        }
+      }
+    },
+    "Connecting to %@…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi collego a %@…"
+          }
+        }
+      }
+    },
+    "Diagnostics": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostica"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine"
+          }
+        }
+      }
+    },
+    "Enter PIN": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inserisci il PIN"
+          }
+        }
+      }
+    },
+    "Error: %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Errore: %@"
+          }
+        }
+      }
+    },
+    "Forget": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimentica"
+          }
+        }
+      }
+    },
+    "Forget %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimentica %@"
+          }
+        }
+      }
+    },
+    "Four fingers": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quattro dita"
+          }
+        }
+      }
+    },
+    "Full-screen trackpad": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trackpad a tutto schermo"
+          }
+        }
+      }
+    },
+    "Gestures": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesti"
+          }
+        }
+      }
+    },
+    "Grant Accessibility permission…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concedi il permesso Accessibilità…"
+          }
+        }
+      }
+    },
+    "Haptic feedback": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feedback aptico"
+          }
+        }
+      }
+    },
+    "Hold one finger still to click and drag": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni fermo un dito per cliccare e trascinare"
+          }
+        }
+      }
+    },
+    "Launch at login": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvia al login"
+          }
+        }
+      }
+    },
+    "Local Network access is allowed for TrackAir in Settings": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'accesso alla Rete locale sia consentito a TrackAir nelle Impostazioni"
+          }
+        }
+      }
+    },
+    "Looking for your Mac…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerco il tuo Mac…"
+          }
+        }
+      }
+    },
+    "Mac": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac"
+          }
+        }
+      }
+    },
+    "Mac and this device are on the same Wi-Fi network": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac e questo dispositivo siano sulla stessa rete Wi-Fi"
+          }
+        }
+      }
+    },
+    "Mission Control (up)": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mission Control (in alto)"
+          }
+        }
+      }
+    },
+    "Momentum": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inerzia"
+          }
+        }
+      }
+    },
+    "Natural scrolling": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scorrimento naturale"
+          }
+        }
+      }
+    },
+    "No Mac found yet. Make sure that:": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun Mac trovato. Controlla che:"
+          }
+        }
+      }
+    },
+    "No Mac found. Open TrackAir on the Mac and stay on the same Wi-Fi network.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun Mac trovato. Apri TrackAir sul Mac e resta sulla stessa rete Wi-Fi."
+          }
+        }
+      }
+    },
+    "No device connected": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun dispositivo collegato"
+          }
+        }
+      }
+    },
+    "Pair": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbina"
+          }
+        }
+      }
+    },
+    "Pair a device": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbina un dispositivo"
+          }
+        }
+      }
+    },
+    "Pair a new device…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbina un nuovo dispositivo…"
+          }
+        }
+      }
+    },
+    "Pair with Mac": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbina al Mac"
+          }
+        }
+      }
+    },
+    "Paired Macs": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac abbinati"
+          }
+        }
+      }
+    },
+    "Paired devices": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dispositivi abbinati"
+          }
+        }
+      }
+    },
+    "Pairing failed. Try again.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbinamento fallito. Riprova."
+          }
+        }
+      }
+    },
+    "Pairing with %@…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbinamento con %@…"
+          }
+        }
+      }
+    },
+    "Pinch to zoom": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom con pizzico"
+          }
+        }
+      }
+    },
+    "Pointer and clicks": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puntatore e clic"
+          }
+        }
+      }
+    },
+    "Quit": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esci"
+          }
+        }
+      }
+    },
+    "Ready": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pronto"
+          }
+        }
+      }
+    },
+    "Resizable trackpad": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trackpad ridimensionabile"
+          }
+        }
+      }
+    },
+    "Scroll and zoom": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scorrimento e zoom"
+          }
+        }
+      }
+    },
+    "Search again": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca di nuovo"
+          }
+        }
+      }
+    },
+    "Secondary click with two fingers": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clic secondario con due dita"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impostazioni"
+          }
+        }
+      }
+    },
+    "Show recognized gestures": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostra i gesti riconosciuti"
+          }
+        }
+      }
+    },
+    "Starting…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvio…"
+          }
+        }
+      }
+    },
+    "Stopped": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermato"
+          }
+        }
+      }
+    },
+    "Swipe between Spaces (left/right)": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scorri tra Spazi (sinistra/destra)"
+          }
+        }
+      }
+    },
+    "Tap to click": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocca per fare clic"
+          }
+        }
+      }
+    },
+    "Tap, then hold to drag": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tocca e poi tieni premuto per trascinare"
+          }
+        }
+      }
+    },
+    "Three-finger drag": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trascinamento a tre dita"
+          }
+        }
+      }
+    },
+    "TrackAir is open on your Mac (icon in the menu bar)": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TrackAir sia aperto sul Mac (icona nella barra dei menu)"
+          }
+        }
+      }
+    },
+    "Too many attempts. Pairing locked for 30 seconds.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Troppi tentativi. Abbinamento bloccato per 30 secondi."
+          }
+        }
+      }
+    },
+    "Too many attempts. Wait 30 seconds and try again.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Troppi tentativi. Aspetta 30 secondi e riprova."
+          }
+        }
+      }
+    },
+    "Valid for 2 minutes. Only devices on your network can see this Mac.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valido per 2 minuti. Solo i dispositivi sulla tua rete vedono questo Mac."
+          }
+        }
+      }
+    },
+    "Wrong PIN (%lld of 3).": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN sbagliato (%lld di 3)."
+          }
+        }
+      }
+    },
+    "Wrong PIN. Check the number on your Mac and try again.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PIN sbagliato. Controlla il numero sul Mac e riprova."
+          }
+        }
+      }
+    },
+    "Paired %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbinato il %@"
+          }
+        }
+      }
+    },
+    "Pointer speed: %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velocità puntatore: %@"
+          }
+        }
+      }
+    },
+    "Scroll speed: %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velocità scorrimento: %@"
+          }
+        }
+      }
+    },
+    "TrackAir %@. Connections are encrypted end to end (ChaCha20-Poly1305) after pairing with a PIN. No data leaves your network.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TrackAir %@. Le connessioni sono cifrate end-to-end (ChaCha20-Poly1305) dopo l'abbinamento con PIN. Nessun dato esce dalla tua rete."
+          }
+        }
+      }
+    },
+    "Pairing code": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codice di abbinamento"
+          }
+        }
+      }
+    },
+    "Point your iPhone or iPad camera at the code": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inquadra il codice con la fotocamera dell'iPhone o dell'iPad"
+          }
+        }
+      }
+    },
+    "%@ wants to pair. Point its camera at the code:": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ chiede di abbinarsi. Inquadra il codice con la sua fotocamera:"
+          }
+        }
+      }
+    },
+    "Or type this PIN: %@ %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oppure digita questo PIN: %@ %@"
+          }
+        }
+      }
+    },
+    "That Mac is not on this network.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quel Mac non è su questa rete."
+          }
+        }
+      }
+    },
+    "Code read. Pairing…": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codice letto. Abbinamento…"
+          }
+        }
+      }
+    },
+    "Type the PIN instead": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferisco digitare il PIN"
+          }
+        }
+      }
+    },
+    "Scan the code instead": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferisco inquadrare il codice"
+          }
+        }
+      }
+    },
+    "I don't see a code on the Mac": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non vedo nessun codice sul Mac"
+          }
+        }
+      }
+    },
+    "Point the camera at the glowing code on your Mac's screen.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inquadra il codice luminoso sullo schermo del Mac."
+          }
+        }
+      }
+    },
+    "You can start using it right away.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puoi usarlo subito."
+          }
+        }
+      }
+    },
+    "Keyboard": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tastiera"
+          }
+        }
+      }
+    },
+    "Copy web address: %@": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia indirizzo web: %@"
+          }
+        }
+      }
+    },
+    "The Mac is not answering. Check that both are on the same Wi-Fi network.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il Mac non risponde. Controlla che siano sulla stessa rete Wi-Fi."
+          }
+        }
+      }
+    },
+    "Try again": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riprova"
+          }
+        }
+      }
+    },
+    "Pair again": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbina di nuovo"
+          }
+        }
+      }
+    },
+    "Pinch: Apps view (close to open, spread to close)": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pizzico: vista App (chiudi per aprire, allarga per chiudere)"
+          }
+        }
+      }
+    },
+    "One finger moves. Tap to click, double-tap to double-click.\nTwo fingers scroll with momentum. Two-finger tap for secondary click. Pinch to zoom.\nThree fingers drag.\nFour fingers left/right switch Spaces, up opens Mission Control, pinch opens the Apps view.\nKeyboard button: type on the Mac; the bar above the keys has Cmd, Ctrl, Alt, Shift, Esc, Tab and arrows for shortcuts. A hardware keyboard works too.\nDefaults mirror the Trackpad settings of your Mac.": {
+      "localizations": {
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un dito muove. Tap per cliccare, doppio tap per il doppio clic.\nDue dita scorrono con inerzia. Tap a due dita per il clic secondario. Pizzico per lo zoom.\nTre dita trascinano.\nQuattro dita a sinistra/destra cambiano Spazio, in alto aprono Mission Control, il pizzico apre la vista App.\nBottone tastiera: scrivi sul Mac; la barra sopra i tasti ha Cmd, Ctrl, Alt, Shift, Esc, Tab e frecce per le scorciatoie. Funziona anche una tastiera fisica.\nI valori iniziali replicano le impostazioni Trackpad del Mac."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

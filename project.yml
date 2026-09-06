@@ -1,0 +1,102 @@
+name: TrackAir
+options:
+  bundleIdPrefix: com.michelevennarini
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: "17.0"
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: ${DEVELOPMENT_TEAM}
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "2"
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    SWIFT_STRICT_CONCURRENCY: minimal
+targets:
+  TrackAir:
+    type: application
+    platform: iOS
+    sources:
+      - Shared
+      - iOS
+    info:
+      path: iOS/Info.plist
+      properties:
+        CFBundleDisplayName: TrackAir
+        CFBundleLocalizations: [en, it]
+        LSApplicationCategoryType: public.app-category.utilities
+        NSLocalNetworkUsageDescription: TrackAir looks for your Mac on the local network to use this device as a trackpad. Nothing leaves your network.
+        NSBonjourServices: [_trackair._udp]
+        NSCameraUsageDescription: TrackAir uses the camera only to read the pairing code shown on your Mac.
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UIRequiresFullScreen: true
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.michelevennarini.trackair
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: false
+  TrackAirMac:
+    type: application
+    platform: macOS
+    sources:
+      - Shared
+      - path: Mac
+        excludes: ["*.metal.txt", "*.html"]
+      - path: Mac/SphereShaders.metal.txt
+        buildPhase: resources
+      - path: Mac/trackpad.html
+        buildPhase: resources
+    info:
+      path: Mac/Info.plist
+      properties:
+        CFBundleDisplayName: TrackAir
+        CFBundleLocalizations: [en, it]
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+        NSLocalNetworkUsageDescription: TrackAir receives trackpad input from your iPhone or iPad over the local network.
+        NSBonjourServices: [_trackair._udp]
+        NSHumanReadableCopyright: Copyright 2026 Michele Vennarini. MIT License.
+    settings:
+      base:
+        PRODUCT_NAME: TrackAir
+        PRODUCT_BUNDLE_IDENTIFIER: com.michelevennarini.trackair.mac
+        ENABLE_HARDENED_RUNTIME: false
+        ENABLE_APP_SANDBOX: false
+  TrackAirTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests]
+    dependencies:
+      - target: TrackAirMac
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.michelevennarini.trackair.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/TrackAir.app/Contents/MacOS/TrackAir
+        BUNDLE_LOADER: $(TEST_HOST)
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+schemes:
+  TrackAirMac:
+    build:
+      targets: { TrackAirMac: all, TrackAirTests: [test] }
+    test:
+      targets: [TrackAirTests]
+  TrackAir:
+    build:
+      targets: { TrackAir: all }

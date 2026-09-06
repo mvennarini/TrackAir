@@ -1,0 +1,7 @@
+build/
+DerivedData/
+*.xcodeproj
+xcuserdata/
+.DS_Store
+Mac/Info.plist
+iOS/Info.plist
