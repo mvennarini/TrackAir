@@ -43,11 +43,21 @@ final class MouseController {
     private var virtual: CGPoint? = nil
     private var timer: DispatchSourceTimer?
     private var idleTicks = 0
+    // estrapolazione nei buchi di rete: velocita' stimata (px per tick) e tratto
+    // gia' percorso "a credito", da scalare dai pacchetti che arrivano in ritardo
+    private var velocity = CGPoint.zero
+    private var debt = CGPoint.zero
+    private var lastPacket: TimeInterval = 0
 
     func move(dx: CGFloat, dy: CGFloat) {
         moveQueue.async {
-            self.pending.x += dx
-            self.pending.y += dy
+            var ddx = dx, ddy = dy
+            // il tratto anticipato durante il buco viene sottratto, senza mai invertire la direzione
+            if self.debt.x != 0 && (self.debt.x > 0) == (ddx > 0) { let k = min(abs(self.debt.x), abs(ddx)); ddx -= copysign(k, ddx); self.debt.x -= copysign(k, self.debt.x) }
+            if self.debt.y != 0 && (self.debt.y > 0) == (ddy > 0) { let k = min(abs(self.debt.y), abs(ddy)); ddy -= copysign(k, ddy); self.debt.y -= copysign(k, self.debt.y) }
+            self.pending.x += ddx
+            self.pending.y += ddy
+            self.lastPacket = CACurrentMediaTime()
             self.idleTicks = 0
             if self.timer == nil { self.startTimer() }
         }
@@ -67,16 +77,31 @@ final class MouseController {
         if let v = virtual, hypot(v.x - real.x, v.y - real.y) > 4 { virtual = nil }
         var pos = virtual ?? real
         let remaining = hypot(pending.x, pending.y)
+        let now = CACurrentMediaTime()
+        var step: CGPoint
         if remaining < 0.05 {
             pending = .zero
-            idleTicks += 1
-            if idleTicks > 120 { timer?.cancel(); timer = nil; virtual = nil }   // mezzo secondo fermo: spengo il timer
-            return
+            let gap = now - lastPacket
+            // buco breve con il dito in corsa: proseguo alla velocita' stimata, che decade in fretta
+            if gap < 0.06 && hypot(velocity.x, velocity.y) > 0.15 {
+                velocity.x *= 0.78; velocity.y *= 0.78
+                step = velocity
+                debt.x += step.x; debt.y += step.y
+            } else {
+                velocity = .zero
+                if gap > 0.12 { debt = .zero }
+                idleTicks += 1
+                if idleTicks > 120 { timer?.cancel(); timer = nil; virtual = nil }   // mezzo secondo fermo: spengo il timer
+                return
+            }
+        } else {
+            // frazione applicata per tick: piu' e' lungo il tratto in attesa, piu' si corre
+            let f: CGFloat = remaining > 40 ? 0.7 : 0.5
+            step = CGPoint(x: pending.x * f, y: pending.y * f)
+            pending.x -= step.x; pending.y -= step.y
+            velocity.x = velocity.x * 0.5 + step.x * 0.5
+            velocity.y = velocity.y * 0.5 + step.y * 0.5
         }
-        // frazione applicata per tick: piu' e' lungo il tratto in attesa, piu' si corre
-        let f: CGFloat = remaining > 40 ? 0.7 : 0.5
-        let step = CGPoint(x: pending.x * f, y: pending.y * f)
-        pending.x -= step.x; pending.y -= step.y
         pos.x += step.x; pos.y += step.y
         pos = clamp(pos, from: real)
         virtual = pos

@@ -110,6 +110,7 @@ final class Client: ObservableObject {
         state = .connecting(mac.name)
         let params = NWParameters.udp
         params.prohibitedInterfaceTypes = [.cellular]
+        params.serviceClass = .interactiveVoice   // priorita' Wi-Fi: meno buchi e meno jitter
         let c = NWConnection(to: mac.endpoint, using: params)
         connectingSince = Date()
         c.stateUpdateHandler = { [weak self] st in

@@ -68,6 +68,7 @@ final class Server: ObservableObject {
     func start() {
         let params = NWParameters.udp
         params.includePeerToPeer = true
+        params.serviceClass = .interactiveVoice
         if let iface = Self.primaryInterface() {
             params.requiredInterface = iface
             log.notice("interfaccia: \(iface.name, privacy: .public)")
